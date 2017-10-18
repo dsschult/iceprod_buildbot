@@ -8,9 +8,9 @@ fi
 pip install -r requirements.txt
 
 # setup singularity images
-#if [ ! -d singularity_images ]; then
-#    mkdir singularity_images
-#fi
+if [ ! -d singularity_images ]; then
+    mkdir singularity_images
+fi
 #python setup_singularity.py
 
 # setup buildbot

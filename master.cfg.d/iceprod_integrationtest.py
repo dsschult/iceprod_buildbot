@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import json
 
@@ -16,7 +18,10 @@ def setup(cfg):
 
     ####### WORKERS
 
-    cfg['workers'][prefix+'_worker'] = worker.LocalWorker(prefix+'_worker', max_builds=1)
+    cfg['workers'][prefix+'_worker'] = worker.LocalWorker(
+        prefix+'_worker', max_builds=1,
+        #properties={'image': 'cvmfs_centos7'}, # singularity image
+    )
 
 
     ####### CHANGESOURCES
@@ -32,13 +37,18 @@ def setup(cfg):
         repourl='git://github.com/WIPACrepo/iceprod.git',
         mode='full',
         method='clobber',
+        codebase='iceprod',
     ))
     factory.addStep(steps.ShellCommand(
+        name='integration test',
         command=[
-            '../cvmfs/env/iceprod/master/env-shell.sh',
-            'python','-m','integration_tests'
+            os.path.join(path,'iceprod/master/env-shell.sh'),
+            'python','-m','integration_tests',
         ],
-        locks=[],
+        locks=[
+            cfg.locks['cpu'].access('counting'),
+            cfg.locks['gpu'].access('counting'),
+        ],
     ))
 
     cfg['builders'][prefix+'_builder'] = util.BuilderConfig(
@@ -53,6 +63,7 @@ def setup(cfg):
 
     cfg['schedulers'][prefix+'-dep'] = schedulers.Triggerable(
         name=prefix+'-dep',
+        codebases=['iceprod'],
         builderNames=[prefix+'_builder'],
     )
 

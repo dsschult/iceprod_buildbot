@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import json
 
@@ -34,27 +36,28 @@ def setup(cfg):
 
     ####### BUILDERS
 
-    cfg['locks']['cvmfs_lock'] = util.MasterLock('cvmfs_lock')
-
-    img_path = os.path.abspath('../singularity_images')
-    singularity_cmd = ['singularity','exec','-B','/mnt/build:/cvmfs',
-                       util.Interpolate(img_path+'/%(prop:image)s.img')]
-
-    path_override = '/usr/local/bin:/usr/bin:/bin:/bin:/sbin:/usr/bin:/usr/sbin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
+    cfg.locks['cvmfs_lock'] = util.MasterLock('cvmfs_lock')
 
     factory = util.BuildFactory()
     # check out the source
-    factory.addStep(steps.Git(repourl='git://github.com/WIPACrepo/cvmfs.git',
-            mode='full', method='clobber'))
+    factory.addStep(steps.Git(
+        repourl='git://github.com/WIPACrepo/cvmfs.git',
+        mode='full',
+        method='clobber',
+        codebase='cvmfs',
+    ))
     factory.addStep(steps.ShellCommand(
-        command=singularity_cmd+[
+        command=self.singularity['cmd']+[
             'python','builders/build.py',
             '--src','icecube.opensciencegrid.org',
             '--dest','/cvmfs/icecube.opensciencegrid.org',
             '--variant',util.Property('variant')
         ],
-        env={'PATH':path_override},
-        locks=[cfg['locks']['cvmfs_lock'].access('exclusive')],
+        locks=[
+            cfg.locks['cpu'].access('exclusive'),
+            cfg.locks['cvmfs_lock'].access('exclusive'),
+        ],
+        env=self.singularity['env'],
     ))
 
     variants = {'py2_v2_base'}

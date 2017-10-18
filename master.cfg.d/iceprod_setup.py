@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import json
 
@@ -13,17 +15,29 @@ def setup(cfg):
 
     ####### WORKERS
 
-    cfg['workers'][prefix+'_worker'] = worker.LocalWorker(prefix+'_worker', max_builds=1)
+    cfg['workers'][prefix+'_worker'] = worker.LocalWorker(
+        prefix+'_worker', max_builds=1,
+        #properties={'image': 'cvmfs_centos7'}, # singularity image
+    )
 
 
     ####### CHANGESOURCES
 
     cfg['change_source']['iceprod'] = changes.GitPoller(
         'git://github.com/WIPACrepo/iceprod.git',
-        workdir=prefix+'-gitpoller-workdir', branch='master',
+        workdir=prefix+'-iceprod-gitpoller-workdir', branch='master',
         category=prefix, project='iceprod',
         pollinterval=300,
     )
+    cfg.codebases['iceprod'] = 'git://github.com/WIPACrepo/iceprod.git'
+
+    cfg['change_source']['cvmfs'] = changes.GitPoller(
+        'git://github.com/WIPACrepo/cvmfs.git',
+        workdir=prefix+'-cvmfs-gitpoller-workdir', branch='master',
+        category=prefix, project='cvmfs',
+        pollinterval=300,
+    )
+    cfg.codebases['cvmfs'] = 'git://github.com/WIPACrepo/cvmfs.git'
 
 
     ####### BUILDERS
@@ -32,18 +46,20 @@ def setup(cfg):
 
     factory = util.BuildFactory()
     # clean everything
-    factory.addStep(steps.RemoveDirectory(dir="build"))
-    factory.addStep(steps.MakeDirectory(dir="build"))
-    factory.addStep(steps.RemoveDirectory(dir=path))
-    factory.addStep(steps.MakeDirectory(dir=path))
+    factory.addStep(steps.RemoveDirectory(name='clean build', dir="build"))
+    factory.addStep(steps.MakeDirectory(name='mkdir build', dir="build"))
+    factory.addStep(steps.RemoveDirectory(name='clean cvmfs', dir=path))
+    factory.addStep(steps.MakeDirectory(name='mkdir cvmfs', dir=path))
     # build iceprod
     factory.addStep(steps.Git(
         repourl='git://github.com/WIPACrepo/cvmfs.git',
         mode='full',
         method='clobber',
         workdir='build',
+        codebase='cvmfs',
     ))
     factory.addStep(steps.ShellCommand(
+        name='build cvmfs',
         command=[
             'python', 'builders/build.py',
             '--src', 'icecube.opensciencegrid.org',
@@ -53,7 +69,10 @@ def setup(cfg):
             '--debug',
         ],
         workdir='build',
-        locks=[],
+        haltOnFailure=True,
+        locks=[
+            cfg.locks['cpu'].access('exclusive'),
+        ],
     ))
 
     cfg['builders'][prefix+'_builder'] = util.BuilderConfig(
@@ -75,7 +94,12 @@ def setup(cfg):
     ####### SCHEDULERS
 
     def isImportant(change):
-        include = ['setup.cfg','setup.py','requirements.txt']
+        if change.project == 'cvmfs':
+            include = ['iceprod']
+        elif change.project == 'iceprod':
+            include = ['setup.cfg','setup.py','requirements.txt']
+        else:
+            return True
         for f in change.files:
             if f in include:
                 return True
@@ -84,6 +108,7 @@ def setup(cfg):
     cfg['schedulers'][prefix] = schedulers.SingleBranchScheduler(
         name=prefix,
         change_filter=util.ChangeFilter(category=prefix),
+        codebases=['iceprod','cvmfs'],
         fileIsImportant=isImportant,
         treeStableTimer=None,
         builderNames=[prefix+'_builder'],
@@ -91,6 +116,7 @@ def setup(cfg):
     cfg['schedulers']['iceprod'] = schedulers.SingleBranchScheduler(
         name='iceprod',
         change_filter=util.ChangeFilter(category=prefix),
+        codebases=['iceprod','cvmfs'],
         fileIsImportant=lambda x:not isImportant(x),
         treeStableTimer=None,
         builderNames=[prefix+'_nonbuild_builder'],
