@@ -56,7 +56,6 @@ def setup(cfg):
         mode='full',
         method='clobber',
         workdir='build',
-        codebase='cvmfs',
     ))
     factory.addStep(steps.ShellCommand(
         name='build cvmfs',
