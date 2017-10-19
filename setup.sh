@@ -11,7 +11,7 @@ pip install -r requirements.txt
 if [ ! -d singularity_images ]; then
     mkdir singularity_images
 fi
-#python setup_singularity.py
+python setup_singularity.py
 
 # setup buildbot
 if [ ! -d master ]; then

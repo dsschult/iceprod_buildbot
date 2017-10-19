@@ -17,7 +17,7 @@ def setup(cfg):
 
     cfg['workers'][prefix+'_worker'] = worker.LocalWorker(
         prefix+'_worker', max_builds=1,
-        #properties={'image': 'cvmfs_centos7'}, # singularity image
+        properties={'image': 'cvmfs_centos6'}, # singularity image
     )
 
 
@@ -59,7 +59,7 @@ def setup(cfg):
     ))
     factory.addStep(steps.ShellCommand(
         name='build cvmfs',
-        command=[
+        command=cfg['singularity']['cmd']+[
             'python', 'builders/build.py',
             '--src', 'icecube.opensciencegrid.org',
             '--dest', path,
@@ -72,6 +72,7 @@ def setup(cfg):
         locks=[
             cfg.locks['cpu'].access('exclusive'),
         ],
+        env=cfg['singularity']['env'],
     ))
 
     cfg['builders'][prefix+'_builder'] = util.BuilderConfig(
