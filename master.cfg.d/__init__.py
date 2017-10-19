@@ -1,8 +1,29 @@
 from __future__ import print_function
 
 import os
+import platform
 
 from buildbot.plugins import *
+
+
+def get_os():
+    d = platform.linux_distribution()
+    os = d[0].lower()
+    if os not in ('ubuntu','debian','centos'):
+        if 'red hat' in os:
+            os = 'centos'
+        else:
+            raise Exception('unknown os: '+os)
+    ver = d[1].lower().split('/')[-1]
+    if os == 'centos':
+        ver = ver.split('.')[0]
+    try:
+        float(ver)
+    except:
+        return os+'_'+ver
+    else:
+        return os+ver
+
 
 class WriteOnceDict(dict):
     def __setitem__(self, key, value):
@@ -30,7 +51,7 @@ class Config(dict):
 
         self.singularity = {
             'img_path': os.path.abspath('../singularity_images'),
-            'cmd': ['singularity','exec','-B','/mnt/build:/cvmfs',
+            'cmd': ['singularity','exec',
                     util.Interpolate(os.path.join(os.path.abspath('../singularity_images'),'%(prop:image)s.img'))],
             'env': {
                 'PATH': '/usr/local/bin:/usr/bin:/bin:/bin:/sbin:/usr/bin:/usr/sbin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin',

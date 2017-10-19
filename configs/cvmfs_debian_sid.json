@@ -1,0 +1,12 @@
+{
+    "image":{
+        "docker_image": "debian:sid"
+    },
+    "postinstall":[
+        "apt-get update",
+        "apt-get -y install build-essential m4 bison python-dev",
+        "apt-get -y install libtool unzip git subversion wget curl",
+        "apt-get -y install libpng-dev libssl-dev libx11-dev libbz2-dev",
+        "apt-get -y install libncurses5-dev libreadline-dev freeglut3-dev"
+    ]
+}

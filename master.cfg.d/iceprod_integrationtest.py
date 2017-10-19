@@ -5,7 +5,7 @@ import json
 
 from buildbot.plugins import *
 
-from . import Config
+from . import Config, get_os
 
 # depends on icperod_setup
 from .iceprod_setup import config as iceprod_setup_config
@@ -20,7 +20,7 @@ def setup(cfg):
 
     cfg['workers'][prefix+'_worker'] = worker.LocalWorker(
         prefix+'_worker', max_builds=1,
-        #properties={'image': 'cvmfs_centos7'}, # singularity image
+        properties={'image': 'cvmfs_'+get_os()}, # singularity image
     )
 
 
@@ -41,7 +41,7 @@ def setup(cfg):
     ))
     factory.addStep(steps.ShellCommand(
         name='integration test',
-        command=[
+        command=cfg.singularity['cmd']+[
             os.path.join(path,'iceprod/master/env-shell.sh'),
             'python','-m','integration_tests',
         ],
@@ -49,6 +49,7 @@ def setup(cfg):
             cfg.locks['cpu'].access('counting'),
             cfg.locks['gpu'].access('counting'),
         ],
+        env=cfg.singularity['env'],
     ))
 
     cfg['builders'][prefix+'_builder'] = util.BuilderConfig(

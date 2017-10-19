@@ -5,11 +5,12 @@ import json
 
 from buildbot.plugins import *
 
-from . import Config
+from . import Config, get_os
 
 __all__ = ['config']
 
 prefix = __file__.split('/')[-1].rsplit('.',1)[0]
+
 
 def setup(cfg):
 
@@ -17,7 +18,7 @@ def setup(cfg):
 
     cfg['workers'][prefix+'_worker'] = worker.LocalWorker(
         prefix+'_worker', max_builds=1,
-        properties={'image': 'cvmfs_centos6'}, # singularity image
+        properties={'image': 'cvmfs_'+get_os()}, # singularity image
     )
 
 
@@ -59,7 +60,7 @@ def setup(cfg):
     ))
     factory.addStep(steps.ShellCommand(
         name='build cvmfs',
-        command=cfg['singularity']['cmd']+[
+        command=cfg.singularity['cmd']+[
             'python', 'builders/build.py',
             '--src', 'icecube.opensciencegrid.org',
             '--dest', path,
@@ -72,7 +73,7 @@ def setup(cfg):
         locks=[
             cfg.locks['cpu'].access('exclusive'),
         ],
-        env=cfg['singularity']['env'],
+        env=cfg.singularity['env'],
     ))
 
     cfg['builders'][prefix+'_builder'] = util.BuilderConfig(
