@@ -43,7 +43,7 @@ def setup(cfg):
 
     ####### BUILDERS
 
-    path = '/iceprod'
+    path = '/shared/iceprod'
 
     factory = util.BuildFactory()
     # clean everything

@@ -30,7 +30,7 @@ def setup(cfg):
 
     ####### BUILDERS
 
-    path = '/iceprod'
+    path = '/shared/iceprod'
 
     factory = util.BuildFactory()
     # start iceprod server

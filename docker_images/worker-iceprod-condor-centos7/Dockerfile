@@ -3,7 +3,7 @@
 FROM centos:7
 
 LABEL description="IceCube - iceprod buildbot worker with condor running centos:7" \
-      mounts="cvmfs, iceprod" \
+      mounts="cvmfs, shared" \
       cpus="1" \
       memory="4000" \
       gpus="0" \
@@ -26,7 +26,7 @@ RUN \
     curl "https://bootstrap.pypa.io/get-pip.py" | python && \
     pip --no-cache-dir install dumb-init 'twisted[tls]' buildbot-worker && \
     mkdir /cvmfs && \
-    mkdir /iceprod && \
+    mkdir /shared && \
     useradd -ms /bin/bash buildbot && chown -R buildbot /buildbot && \
     wget -O /buildbot/condor.tar.gz http://prod-exe.icecube.wisc.edu/htcondor/condor-8.7.2-x86_64_RedHat7-stripped.tar.gz && \
     mkdir -p /buildbot/condor-8.7.2/local && \
@@ -42,4 +42,4 @@ WORKDIR /buildbot
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-CMD ["bash", "-c", "source /buildbot/condor-8.7.2/condor.sh; condor_master && twistd -ny && buildbot.tac"]
+CMD ["bash", "-c", "source /buildbot/condor-8.7.2/condor.sh; condor_master && twistd -ny buildbot.tac"]

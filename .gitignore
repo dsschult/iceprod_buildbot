@@ -106,3 +106,4 @@ python_env
 
 # ignore secrets
 buildbot-secrets.yml
+/buildcache

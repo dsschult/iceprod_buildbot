@@ -46,7 +46,7 @@
                                 }
                             }
                         ],
-                        "image": "worker-iceprod-centos7-build",
+                        "image": "icecube-buildbot/worker-iceprod-centos7-build",
                         "imagePullPolicy": "Always",
                         "name": "worker-iceprod-centos7-build",
                         "resources": {
@@ -58,7 +58,7 @@
                         },
                         "volumeMounts": [
                             {
-                                "mountPath": "/iceprod",
+                                "mountPath": "/shared",
                                 "name": "iceprod-buildbot-worker-shared-storage"
                             }
                         ]

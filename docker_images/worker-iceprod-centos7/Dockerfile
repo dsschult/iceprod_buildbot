@@ -3,7 +3,7 @@
 FROM centos:7
 
 LABEL description="IceCube - iceprod buildbot worker running centos:7" \
-      mounts="cvmfs, iceprod" \
+      mounts="cvmfs, shared" \
       cpus="1" \
       memory="1000" \
       gpus="0" \
@@ -21,7 +21,7 @@ RUN \
     curl "https://bootstrap.pypa.io/get-pip.py" | python && \
     pip --no-cache-dir install dumb-init 'twisted[tls]' buildbot-worker && \
     mkdir /cvmfs && \
-    mkdir /iceprod && \
+    mkdir /shared && \
     useradd -ms /bin/bash buildbot && chown -R buildbot /buildbot
 
 USER buildbot

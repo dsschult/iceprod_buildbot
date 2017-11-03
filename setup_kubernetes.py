@@ -81,36 +81,44 @@ def make_master_cfg():
             'data': config,
         }, f, sort_keys=True, indent=4, separators=(',',': '))
 
+def make_docker(name):
+    # check if docker image exists
+    out = subprocess.check_output(['docker','images',
+            '--filter','label=organization=icecube-buildbot',
+            '--filter','label=name='+name,
+            '--format','{{.Repository}}'])
+    if out:
+        out = [l for l in out.split('\n') if name in l]
+    if not out:
+        # build docker image
+        docker_path = os.path.join('docker_images',name)
+        shutil.copy2('worker_buildbot.tac',
+                     os.path.join(docker_path,'buildbot.tac'))
+        try:
+            subprocess.check_call(['docker','build','--force-rm','-t','icecube-buildbot/'+name,'.'], cwd=docker_path)
+        except Exception,KeyboardInterrupt:
+            out = subprocess.check_output(['docker','images',
+                    '--filter','label=organization=icecube-buildbot',
+                    '--filter','label=name='+name,
+                    '--format','{{.ID}} {{.Repository}}'])
+            if out:
+                out = [l for l in out.split('\n') if name not in l]
+                subprocess.call(['docker','image','rm',out[0].split()[0]])
+            raise
+        finally:
+            os.remove(os.path.join(docker_path,'buildbot.tac'))
+
 def make_workers():
     for name in os.listdir('docker_images'):
-        # check if docker image exists
-        out = subprocess.check_output(['docker','images',
-                '--filter','label=organization=icecube-buildbot',
-                '--filter','label=name='+name,
-                '--format','{{.Repository}}'])
-        if out:
-            out = [l for l in out.split('\n') if name in l]
-        if not out:
-            # build docker image
-            docker_path = os.path.join('docker_images',name)
-            shutil.copy2('worker_buildbot.tac',
-                         os.path.join(docker_path,'buildbot.tac'))
-            try:
-                subprocess.check_call(['docker','build','--force-rm','-t','icecube-buildbot/'+name,'.'], cwd=docker_path)
-            except Exception,KeyboardInterrupt:
-                out = subprocess.check_output(['docker','images',
-                        '--filter','label=organization=icecube-buildbot',
-                        '--filter','label=name='+name,
-                        '--format','{{.ID}} {{.Repository}}'])
-                if out:
-                    out = [l for l in out.split('\n') if name not in l]
-                    subprocess.call(['docker','image','rm',out[0].split()[0]])
-                raise
-            finally:
-                os.remove(os.path.join(docker_path,'buildbot.tac'))
+        if not name.startswith('worker'):
+            continue
+
+        # make docker image
+        make_docker(name)
 
         # get labels
-        out = subprocess.check_output(['docker','inspect','icecube-buildbot/'+name])
+        container_name = 'icecube-buildbot/'+name
+        out = subprocess.check_output(['docker','inspect',container_name])
         config = json.loads(out)[0]['ContainerConfig']
         labels = config['Labels']
         cpus = int(labels['cpus']) if 'cpus' in labels else 1
@@ -140,7 +148,7 @@ def make_workers():
                     'template': {
                         'spec': {
                             'containers': [{
-                                'image': name,
+                                'image': container_name,
                                 'imagePullPolicy': 'Always',
                                 'name': name,
                                 'resources': {
@@ -173,7 +181,7 @@ def make_workers():
                                 'volumeMounts': [
                                     {
                                         'name': 'iceprod-buildbot-worker-shared-storage',
-                                        'mountPath': '/iceprod',
+                                        'mountPath': '/shared',
                                     },
                                 ],
                             }],
@@ -201,6 +209,7 @@ def main():
     make_secrets()
     make_config()
     make_master_cfg()
+    make_docker('master-iceprod')
     make_workers()
 
 if __name__ == '__main__':

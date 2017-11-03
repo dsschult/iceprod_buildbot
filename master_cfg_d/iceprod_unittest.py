@@ -30,8 +30,8 @@ def setup(cfg):
 
     ####### BUILDERS
 
-    cvmfs_path = '/iceprod'
-    coverage_path = os.path.abspath('coverage')
+    cvmfs_path = '/shared/iceprod'
+    coverage_path = '/shared/coverage'
 
     factory = util.BuildFactory()
     # start iceprod server
