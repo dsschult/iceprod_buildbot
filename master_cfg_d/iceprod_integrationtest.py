@@ -10,17 +10,18 @@ from . import Config, get_os
 # depends on icperod_setup
 from .iceprod_setup import config as iceprod_setup_config
 
-__all__ = ['config']
 
 prefix = __file__.split('/')[-1].rsplit('.',1)[0]
+
 
 def setup(cfg):
 
     ####### WORKERS
 
-    cfg['workers'][prefix+'_worker'] = worker.LocalWorker(
-        prefix+'_worker', max_builds=1,
-        properties={'image': 'cvmfs_'+get_os()}, # singularity image
+    workername = 'iceprod-condor-centos7'
+    cfg['workers'][prefix+'_worker'] = worker.Worker(
+        workername, os.environ['WORKER_PASSWORD'],
+        max_builds=1,
     )
 
 
@@ -29,8 +30,7 @@ def setup(cfg):
 
     ####### BUILDERS
 
-    cvmfs_path = os.path.abspath('cvmfs')
-    coverage_path = os.path.abspath('coverage')
+    path = '/iceprod'
 
     factory = util.BuildFactory()
     # start iceprod server
@@ -41,33 +41,23 @@ def setup(cfg):
         codebase='iceprod',
     ))
     factory.addStep(steps.ShellCommand(
-        name='unittest',
-        command=cfg.singularity['cmd']+[
-            os.path.join(cvmfs_path,'iceprod/master/env-shell.sh'),
-            './coverage.sh','--core','--server',
+        name='integration test',
+        command=[
+            os.path.join(path,'iceprod/master/env-shell.sh'),
+            'python','-m','integration_tests',
         ],
         locks=[
-            cfg.locks['cpu'].access('counting'),
+            cfg.locks['gpu'].access('counting'),
         ],
-    ))
-    factory.addStep(steps.ShellSequence(
-        name='coverage',
-        commands=[
-            util.ShellArg(command=['cp','-r','htmlcov',coverage_path+'.tmp']),
-            util.ShellArg(command=['mv',coverage_path+'.tmp',coverage_path]),
-        ],
-        locks=[
-            cfg.locks['cpu'].access('counting'),
-        ],
-        env=cfg.singularity['env'],
     ))
 
     cfg['builders'][prefix+'_builder'] = util.BuilderConfig(
         name=prefix+'_builder',
-        workername=prefix+'_worker',
+        workername=workername,
         factory=factory,
         properties={},
     )
+
 
     ####### SCHEDULERS
 

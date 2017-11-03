@@ -1,4 +1,4 @@
-from __future__ import print_function
+"""from __future__ import print_function
 
 import os
 import json
@@ -11,23 +11,23 @@ __all__ = ['config']
 
 prefix = __file__.split('/')[-1].rsplit('.',1)[0]
 
+worker_cfgs {
+    'cvmfs-RHEL_7': 'worker-cvmfs-centos7-build',
+}
+
+
 def setup(cfg):
     return
 
     ####### WORKERS
 
-    worker_cfgs = {}
-    for name in os.listdir('../config'):
-        w_name = name.replace('.json','')
-        with open(os.path.join('../config',name)) as f:
-            worker_cfgs[w_name] = json.load(f)
-
     # The 'workers' list defines the set of recognized workers. Each element is
     # a Worker object, specifying a unique worker name and password.  The same
     # worker name and password must be configured on the worker.
     for name in worker_cfgs:
-        cfg['workers'][prefix+name] = worker.LocalWorker(
-            name, max_builds=1, properties={'image':name}
+        cfg['workers'][prefix+name] = worker.Worker(
+            name, os.environ['WORKER_PASSWORD'],
+            max_builds=1,
         )
 
 
@@ -47,17 +47,15 @@ def setup(cfg):
         codebase='cvmfs',
     ))
     factory.addStep(steps.ShellCommand(
-        command=self.singularity['cmd']+[
+        command=[
             'python','builders/build.py',
             '--src','icecube.opensciencegrid.org',
             '--dest','/cvmfs/icecube.opensciencegrid.org',
             '--variant',util.Property('variant')
         ],
         locks=[
-            cfg.locks['cpu'].access('exclusive'),
             cfg.locks['cvmfs_lock'].access('exclusive'),
         ],
-        env=self.singularity['env'],
     ))
 
     variants = {'py2_v2_base'}
@@ -76,4 +74,4 @@ def setup(cfg):
 
 
 
-config = Config(setup)
+config = Config(setup)"""

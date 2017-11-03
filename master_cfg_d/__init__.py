@@ -49,15 +49,6 @@ class Config(dict):
         self.dependencies = []
         self.setup = setup
 
-        self.singularity = {
-            'img_path': os.path.abspath('../singularity_images'),
-            'cmd': ['singularity','exec',
-                    util.Interpolate(os.path.join(os.path.abspath('../singularity_images'),'%(prop:image)s.img'))],
-            'env': {
-                'PATH': '/usr/local/bin:/usr/bin:/bin:/bin:/sbin:/usr/bin:/usr/sbin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin',
-            },
-        }
-
 
     def register_dependency(self, dep):
         self.dependencies.append(dep)

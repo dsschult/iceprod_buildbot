@@ -1,0 +1,78 @@
+{
+    "apiVersion": "apps/v1beta2",
+    "kind": "Deployment",
+    "metadata": {
+        "labels": {
+            "app": "buildbot-worker"
+        },
+        "name": "worker-iceprod-condor-centos7"
+    },
+    "spec": {
+        "replicas": 1,
+        "selector": {
+            "matchLabels": {
+                "app": "buildbot-worker"
+            }
+        },
+        "template": {
+            "metadata": {
+                "labels": {
+                    "app": "buildbot-worker"
+                }
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "env": [
+                            {
+                                "name": "BUILDMASTER",
+                                "value": "buildbot-worker-endpoint"
+                            },
+                            {
+                                "name": "BUILDMASTER_PORT",
+                                "value": "9989"
+                            },
+                            {
+                                "name": "WORKERNAME",
+                                "value": "iceprod-condor-centos7"
+                            },
+                            {
+                                "name": "WORKERPASS",
+                                "valueFrom": {
+                                    "secretKeyRef": {
+                                        "key": "worker_password",
+                                        "name": "buildbot"
+                                    }
+                                }
+                            }
+                        ],
+                        "image": "worker-iceprod-condor-centos7",
+                        "imagePullPolicy": "Always",
+                        "name": "worker-iceprod-condor-centos7",
+                        "resources": {
+                            "limits": {
+                                "alpha.kubernetes.io/nvidia-gpu": 0,
+                                "cpu": 1,
+                                "memory": 4000
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/iceprod",
+                                "name": "iceprod-buildbot-worker-shared-storage"
+                            }
+                        ]
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "iceprod-buildbot-worker-shared-storage",
+                        "persistentVolumeClaim": {
+                            "claimName": "iceprod-buildbot-worker-pv-claim"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}

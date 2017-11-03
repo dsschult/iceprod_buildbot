@@ -103,3 +103,6 @@ ENV/
 
 master
 python_env
+
+# ignore secrets
+buildbot-secrets.yml

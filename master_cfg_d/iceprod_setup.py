@@ -7,7 +7,6 @@ from buildbot.plugins import *
 
 from . import Config, get_os
 
-__all__ = ['config']
 
 prefix = __file__.split('/')[-1].rsplit('.',1)[0]
 
@@ -16,9 +15,10 @@ def setup(cfg):
 
     ####### WORKERS
 
-    cfg['workers'][prefix+'_worker'] = worker.LocalWorker(
-        prefix+'_worker', max_builds=1,
-        properties={'image': 'cvmfs_'+get_os()}, # singularity image
+    workername = 'iceprod-centos7-build'
+    cfg['workers'][workername] = worker.Worker(
+        workername, os.environ['WORKER_PASSWORD'],
+        max_builds=1,
     )
 
 
@@ -43,7 +43,7 @@ def setup(cfg):
 
     ####### BUILDERS
 
-    path = os.path.abspath('cvmfs')
+    path = '/iceprod'
 
     factory = util.BuildFactory()
     # clean everything
@@ -60,7 +60,7 @@ def setup(cfg):
     ))
     factory.addStep(steps.ShellCommand(
         name='build cvmfs',
-        command=cfg.singularity['cmd']+[
+        command=[
             'python', 'builders/build.py',
             '--src', 'icecube.opensciencegrid.org',
             '--dest', path,
@@ -71,14 +71,12 @@ def setup(cfg):
         workdir='build',
         haltOnFailure=True,
         locks=[
-            cfg.locks['cpu'].access('exclusive'),
         ],
-        env=cfg.singularity['env'],
     ))
 
     cfg['builders'][prefix+'_builder'] = util.BuilderConfig(
         name=prefix+'_builder',
-        workername=prefix+'_worker',
+        workername=workername,
         factory=factory,
         properties={},
     )
@@ -86,7 +84,7 @@ def setup(cfg):
     nonbuild_factory = util.BuildFactory()
     cfg['builders'][prefix+'_nonbuild_builder'] = util.BuilderConfig(
         name=prefix+'_nonbuild_builder',
-        workername=prefix+'_worker',
+        workername=workername,
         factory=nonbuild_factory,
         properties={},
     )
@@ -95,6 +93,8 @@ def setup(cfg):
     ####### SCHEDULERS
 
     def isImportant(change):
+        if not os.listdir(path):
+            return True # needs rebuilding
         if change.project == 'cvmfs':
             include = ['iceprod']
         elif change.project == 'iceprod':

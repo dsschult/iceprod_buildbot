@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: iceprod-buildbot
+spec:
+  ports:
+  - port: 8010
+  selector:
+    app: iceprod-buildbot-master
+  clusterIP: None
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: iceprod-buildbot-pv-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  #persistentVolumeReclaimPolicy: Retain
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: iceprod-buildbot
+spec:
+  selector:
+    matchLabels:
+      app: iceprod-buildbot-master
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: iceprod-buildbot-master
+        type: buildbot-master
+    spec:
+      containers:
+      - name: buildbot-master
+        image: buildbot/buildbot-master:v0.9.12
+        env:
+        - name: BUILDBOT_CONFIG_DIR
+          value: /var/lib/buildbot
+        - name: BUILDBOT_MASTER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: buildbot-config
+              key: master_url
+        - name: WORKER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: iceprod-buildbot
+              key: worker_password
+        volumeMounts:
+        - name: iceprod-buildbot-master-config
+          mountPath: /var/lib/buildbot
+        - name: iceprod-buildbot-master-config-d
+          mountPath: /var/lib/buildbot/master_cfg_d
+        - name: iceprod-buildbot-master-persistent-storage
+          mountPath: /mnt
+        livenessProbe:
+          httpGet:
+            path: /
+            port: iceprod-build
+          initialDelaySeconds: 120
+          periodSeconds: 10
+        ports:
+        - containerPort: 8010
+          name: iceprod-build
+          protocol: TCP
+      volumes:
+      - name: iceprod-buildbot-master-config
+        configMap:
+          name: buildbot-master.cfg
+      - name: iceprod-buildbot-master-config-d
+        configMap:
+          name: buildbot-master.cfg.d
+      - name: iceprod-buildbot-master-persistent-storage
+        persistentVolumeClaim:
+          claimName: iceprod-buildbot-master-pv-claim
