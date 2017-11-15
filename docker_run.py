@@ -48,6 +48,8 @@ def main():
                     '-e','BUILDMASTER='+master_ip,
                     '-e','BUILDMASTER_PORT=9989',
                     '-e','WORKERNAME='+name,
+                    '--cap-add','sys_admin', # for mounting cvmfs
+                    '--device','/dev/fuse', # for mounting cvmfs
                     'icecube-buildbot/worker-'+name]).strip()
                 workers[name] = w
                 time.sleep(.1)

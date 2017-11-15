@@ -27,4 +27,4 @@ WORKDIR /data
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-CMD ["bash","-c","export PYTHONPATH=/buildbot;if [ -z master.cfg ]; then buildbot create-master . ; fi; rm -f master.cfg twistd.pid; ln -s /buildbot/master.cfg master.cfg; twistd -ny buildbot.tac"]
+CMD ["bash","-c","export PYTHONPATH=/buildbot;if [ -z buildbot.tac ]; then buildbot create-master . ; fi; rm -f master.cfg twistd.pid; ln -s /buildbot/master.cfg master.cfg; twistd -ny buildbot.tac"]

@@ -3,7 +3,7 @@
 FROM centos:7
 
 LABEL description="IceCube - iceprod buildbot worker with devel packages running centos:7" \
-      mounts="cvmfs, shared" \
+      mounts="shared" \
       cpus="1" \
       memory="2000" \
       gpus="0" \
