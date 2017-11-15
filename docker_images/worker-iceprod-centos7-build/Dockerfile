@@ -15,7 +15,8 @@ COPY buildbot.tac /buildbot/buildbot.tac
 
 RUN \
     yum clean all && \
-    yum -y install gcc gcc-c++ gcc-gfortran autoconf automake make m4 bison \
+    yum -y install gcc gcc-c++ gcc-gfortran autoconf automake make \
+        m4 bison flex \
         libtool patch binutils unzip git subversion wget curl \
         libpng-devel openssl-devel libX11-devel bzip2-devel \
         ncurses-devel readline-devel libXext-devel libXi-devel \
