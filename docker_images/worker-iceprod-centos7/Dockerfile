@@ -29,6 +29,8 @@ RUN \
     yum clean all && \
     curl "https://bootstrap.pypa.io/get-pip.py" | python && \
     pip --no-cache-dir install dumb-init 'twisted[tls]' buildbot-worker && \
+    echo -e "#!/bin/bash\ntwistd -ny buildbot.tac" > /buildbot/start.sh && \
+    chmod +x /buildbot/start.sh && \
     mkdir /shared && \
     useradd -ms /bin/bash buildbot && chown -R buildbot /buildbot
 
@@ -38,4 +40,4 @@ WORKDIR /buildbot
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-CMD ["bash", "-c", "mount -t cvmfs icecube.opensciencegrid.org /cvmfs/icecube.opensciencegrid.org; su buildbot twistd -ny buildbot.tac"]
+CMD ["bash", "-c", "mount -t cvmfs icecube.opensciencegrid.org /cvmfs/icecube.opensciencegrid.org; su buildbot start.sh"]
