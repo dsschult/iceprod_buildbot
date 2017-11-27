@@ -1,6 +1,6 @@
 # iceprod_buildbot/worker-iceprod-condor-centos7
 
-FROM centos:7
+FROM nvidia/cuda:9.0-runtime-centos7
 
 LABEL description="IceCube - iceprod buildbot worker with condor running centos:7" \
       mounts="shared" \
@@ -32,6 +32,9 @@ RUN \
     echo -e "CVMFS_REPOSITORIES='icecube.opensciencegrid.org'\nCVMFS_HTTP_PROXY='DIRECT'" > /etc/cvmfs/default.local && \
     mkdir -p /cvmfs/icecube.opensciencegrid.org && \
     yum clean all && \
+    mkdir -p /etc/OpenCL/vendors && \
+    echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd && \
+    ln -s /usr/local/cuda/lib64/libcudart.so.9.0 /usr/lib64/libcudart.so && \
     curl "https://bootstrap.pypa.io/get-pip.py" | python && \
     pip --no-cache-dir install dumb-init 'twisted[tls]' buildbot-worker && \
     mkdir /shared && \
