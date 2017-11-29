@@ -5,14 +5,14 @@ FROM nvidia/cuda:9.0-runtime-centos7
 LABEL description="IceCube - iceprod buildbot worker with condor running centos:7" \
       mounts="shared" \
       cvmfs="true" \
-      cpus="1" \
-      memory="4000" \
+      cpus="4" \
+      memory="16000" \
       gpus="0" \
       privileges="sys_admin" \
       devices="/dev/fuse" \
       organization="icecube-buildbot" \
       name="worker-iceprod-condor-centos7" \
-      version="0.1"
+      version="0.2"
 
 COPY buildbot.tac /buildbot/buildbot.tac
 
