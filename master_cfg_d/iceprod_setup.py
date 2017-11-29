@@ -42,7 +42,6 @@ def setup(cfg):
 
 
     ####### BUILDERS
-    cfg.locks['iceprod_shared'] = util.MasterLock('cvmfs_lock')
 
     path = '/shared/iceprod'
 
@@ -129,3 +128,4 @@ def setup(cfg):
     )
 
 config = Config(setup)
+config.locks['iceprod_shared'] = util.MasterLock('cvmfs_lock')
