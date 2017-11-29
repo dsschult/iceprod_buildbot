@@ -48,6 +48,7 @@ def setup(cfg):
         ],
         locks=[
             cfg.locks['gpu'].access('counting'),
+            cfg.locks['iceprod_shared'].access('counting'),
         ],
     ))
 

@@ -48,6 +48,7 @@ def setup(cfg):
             './coverage.sh','--core','--server',
         ],
         locks=[
+            cfg.locks['iceprod_shared'].access('counting')
         ],
     ))
     factory.addStep(steps.ShellSequence(
@@ -57,6 +58,7 @@ def setup(cfg):
             util.ShellArg(command=['mv',coverage_path+'.tmp',coverage_path]),
         ],
         locks=[
+            cfg.locks['iceprod_shared'].access('counting')
         ],
     ))
 
