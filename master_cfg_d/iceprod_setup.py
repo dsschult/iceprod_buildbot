@@ -93,18 +93,21 @@ def setup(cfg):
     ####### SCHEDULERS
 
     def isImportant(change):
-        if not os.listdir(path):
-            return True # needs rebuilding
-        if change.project == 'cvmfs':
-            include = ['iceprod']
-        elif change.project == 'iceprod':
-            include = ['setup.cfg','setup.py','requirements.txt']
-        else:
-            return True
-        for f in change.files:
-            if f in include:
+        try:
+            if not os.listdir(path):
+                return True # needs rebuilding
+            if change.project == 'cvmfs':
+                include = ['iceprod']
+            elif change.project == 'iceprod':
+                include = ['setup.cfg','setup.py','requirements.txt']
+            else:
                 return True
-        return False
+            for f in change.files:
+                if f in include:
+                    return True
+            return False
+        except:
+            return True
 
     cfg['schedulers'][prefix] = schedulers.SingleBranchScheduler(
         name=prefix,
