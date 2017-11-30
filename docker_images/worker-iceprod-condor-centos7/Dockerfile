@@ -44,7 +44,7 @@ RUN \
     tar -C /buildbot -zxf /buildbot/condor.tar.gz && \
     cd /buildbot/condor-8.7.2;HOSTNAME="worker-iceprod-condor-centos7.svc.cluster.local" /buildbot/condor-8.7.2-x86_64_RedHat7-stripped/condor_install --owner buildbot --local-dir=/buildbot/condor-8.7.2 --make-personal-condor && \
     rm -rf /buildbot/condor.tar.gz /buildbot/condor-8.7.2-x86_64_RedHat7-stripped && \
-    echo -e "use FEATURE : GPUs\nNUM_CPUS=4\nMEMORY=16000" >> /buildbot/condor-8.7.2/etc/condor_config && \
+    echo -e "use FEATURE : GPUs\nuse FEATURE : PartitionableSlot\nNUM_CPUS=4\nMEMORY=16000" >> /buildbot/condor-8.7.2/etc/condor_config && \
     echo -e "#!/bin/bash\nsource /buildbot/condor-8.7.2/condor.sh;\ncondor_master;\ntwistd -ny buildbot.tac" > /buildbot/start.sh && \
     chmod +x /buildbot/start.sh && \
     chown -R buildbot /buildbot
