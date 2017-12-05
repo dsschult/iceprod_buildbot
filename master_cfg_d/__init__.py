@@ -49,7 +49,6 @@ class Config(dict):
         self.dependencies = []
         self.setup = setup
 
-
     def register_dependency(self, dep):
         self.dependencies.append(dep)
 
@@ -74,5 +73,7 @@ class Config(dict):
             for b in self['builders']:
                 if b not in dep_builders:
                     self['builders'][b].factory.addStep(steps.Trigger(
-                        schedulerNames=dep_sched
+                        schedulerNames=dep_sched,
+                        waitForFinish=False,
+                        updateSourceStamp=False,
                     ))
