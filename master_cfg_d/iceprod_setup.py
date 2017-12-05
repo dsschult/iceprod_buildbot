@@ -27,19 +27,9 @@ def setup(cfg):
     cfg['change_source']['iceprod'] = changes.GitPoller(
         'git://github.com/WIPACrepo/iceprod.git',
         workdir=prefix+'-iceprod-gitpoller-workdir', branch='master',
-        category=prefix, project='iceprod',
+        category=prefix,
         pollinterval=300,
     )
-    cfg.codebases['iceprod'] = 'git://github.com/WIPACrepo/iceprod.git'
-
-    cfg['change_source']['cvmfs'] = changes.GitPoller(
-        'git://github.com/WIPACrepo/cvmfs.git',
-        workdir=prefix+'-cvmfs-gitpoller-workdir', branch='master',
-        category=prefix, project='cvmfs',
-        pollinterval=300,
-    )
-    cfg.codebases['cvmfs'] = 'git://github.com/WIPACrepo/cvmfs.git'
-
 
     ####### BUILDERS
 
@@ -97,12 +87,7 @@ def setup(cfg):
         try:
             if not os.listdir(path):
                 return True # needs rebuilding
-            if change.project == 'cvmfs':
-                include = ['iceprod']
-            elif change.project == 'iceprod':
-                include = ['setup.cfg','setup.py','requirements.txt']
-            else:
-                return True
+            include = ['setup.cfg','setup.py','requirements.txt']
             for f in change.files:
                 if f in include:
                     return True
@@ -113,7 +98,6 @@ def setup(cfg):
     cfg['schedulers'][prefix] = schedulers.SingleBranchScheduler(
         name=prefix,
         change_filter=util.ChangeFilter(category=prefix),
-        codebases=['iceprod','cvmfs'],
         fileIsImportant=isImportant,
         treeStableTimer=None,
         builderNames=[prefix+'_builder'],
@@ -121,7 +105,6 @@ def setup(cfg):
     cfg['schedulers']['iceprod'] = schedulers.SingleBranchScheduler(
         name='iceprod',
         change_filter=util.ChangeFilter(category=prefix),
-        codebases=['iceprod','cvmfs'],
         fileIsImportant=lambda x:not isImportant(x),
         treeStableTimer=None,
         builderNames=[prefix+'_nonbuild_builder'],

@@ -44,7 +44,6 @@ def setup(cfg):
         repourl='git://github.com/WIPACrepo/cvmfs.git',
         mode='full',
         method='clobber',
-        codebase='cvmfs',
     ))
     factory.addStep(steps.ShellCommand(
         command=[
