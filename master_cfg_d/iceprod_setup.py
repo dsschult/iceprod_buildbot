@@ -51,7 +51,7 @@ def setup(cfg):
 
     class SetupCVMFS(steps.BuildStep):
         def run(self):
-            changes = util.Properties('changes')
+            changes = util.Property('changes')
             if isImportant(changes):
                 # create a ShellCommand for each stage and add them to the build
                 self.build.addStepsAfterCurrentStep([
