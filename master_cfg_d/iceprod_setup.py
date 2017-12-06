@@ -4,6 +4,7 @@ import os
 import json
 
 from buildbot.plugins import *
+from buildbot.process.buildstep import SUCCESS,SKIPPED
 
 from . import Config, get_os
 
@@ -21,7 +22,6 @@ def setup(cfg):
         max_builds=1,
     )
 
-
     ####### CHANGESOURCES
 
     cfg['change_source']['iceprod'] = changes.GitPoller(
@@ -31,35 +31,62 @@ def setup(cfg):
         pollinterval=300,
     )
 
+
     ####### BUILDERS
 
     path = '/shared/iceprod'
 
+    def isImportant(change):
+        try:
+            if not (os.path.exists(path) and os.listdir(path)):
+                return True # needs rebuilding
+            include = ['setup.cfg','setup.py','requirements.txt']
+            for f in change.files:
+                if f in include:
+                    return True
+            return False
+        except:
+            raise
+            return True
+
+    class SetupCVMFS(steps.BuildStep):
+        def run(self):
+            changes = util.Properties('changes')
+            if isImportant(changes):
+                # create a ShellCommand for each stage and add them to the build
+                self.build.addStepsAfterCurrentStep([
+                    steps.RemoveDirectory(name='clean build', dir="build"),
+                    steps.MakeDirectory(name='mkdir build', dir="build"),
+                    steps.RemoveDirectory(name='clean cvmfs', dir=path),
+                    steps.MakeDirectory(name='mkdir cvmfs', dir=path),
+                    # build iceprod
+                    steps.Git(
+                        repourl='git://github.com/WIPACrepo/cvmfs.git',
+                        mode='full',
+                        method='clobber',
+                        workdir='build',
+                    ),
+                    steps.ShellCommand(
+                        name='build cvmfs',
+                        command=[
+                            'python', 'builders/build.py',
+                            '--src', 'icecube.opensciencegrid.org',
+                            '--dest', path,
+                            '--variant', 'iceprod',
+                            '--version', 'master',
+                            '--debug',
+                        ],
+                        workdir='build',
+                        haltOnFailure=True,
+                    ),
+                ])
+                return SUCCESS
+            return SKIPPED
+
+
     factory = util.BuildFactory()
-    # clean everything
-    factory.addStep(steps.RemoveDirectory(name='clean build', dir="build"))
-    factory.addStep(steps.MakeDirectory(name='mkdir build', dir="build"))
-    factory.addStep(steps.RemoveDirectory(name='clean cvmfs', dir=path))
-    factory.addStep(steps.MakeDirectory(name='mkdir cvmfs', dir=path))
-    # build iceprod
-    factory.addStep(steps.Git(
-        repourl='git://github.com/WIPACrepo/cvmfs.git',
-        mode='full',
-        method='clobber',
-        workdir='build',
-    ))
-    factory.addStep(steps.ShellCommand(
-        name='build cvmfs',
-        command=[
-            'python', 'builders/build.py',
-            '--src', 'icecube.opensciencegrid.org',
-            '--dest', path,
-            '--variant', 'iceprod',
-            '--version', 'master',
-            '--debug',
-        ],
-        workdir='build',
-        haltOnFailure=True,
+    factory.addStep(SetupCVMFS(
+        name="Do setup?",
         locks=[
             cfg.locks['iceprod_shared'].access('exclusive')
         ],
@@ -72,43 +99,15 @@ def setup(cfg):
         properties={},
     )
 
-    nonbuild_factory = util.BuildFactory()
-    cfg['builders'][prefix+'_nonbuild_builder'] = util.BuilderConfig(
-        name=prefix+'_nonbuild_builder',
-        workername=workername,
-        factory=nonbuild_factory,
-        properties={},
-    )
-
 
     ####### SCHEDULERS
-
-    def isImportant(change):
-        try:
-            if not os.listdir(path):
-                return True # needs rebuilding
-            include = ['setup.cfg','setup.py','requirements.txt']
-            for f in change.files:
-                if f in include:
-                    return True
-            return False
-        except:
-            return True
 
     cfg['schedulers'][prefix] = schedulers.SingleBranchScheduler(
         name=prefix,
         change_filter=util.ChangeFilter(category=prefix),
-        fileIsImportant=isImportant,
         treeStableTimer=None,
         builderNames=[prefix+'_builder'],
     )
-    cfg['schedulers']['iceprod'] = schedulers.SingleBranchScheduler(
-        name='iceprod',
-        change_filter=util.ChangeFilter(category=prefix),
-        fileIsImportant=lambda x:not isImportant(x),
-        treeStableTimer=None,
-        builderNames=[prefix+'_nonbuild_builder'],
-    )
 
 config = Config(setup)
-config.locks['iceprod_shared'] = util.MasterLock('cvmfs_lock')
+config.locks['iceprod_shared'] = util.MasterLock('cvmfs_lock', maxCount=100)

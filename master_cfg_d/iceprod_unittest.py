@@ -39,6 +39,7 @@ def setup(cfg):
         repourl='git://github.com/WIPACrepo/iceprod.git',
         mode='full',
         method='clobber',
+        codebase='iceprod',
     ))
     factory.addStep(steps.ShellCommand(
         name='unittest',
@@ -72,6 +73,7 @@ def setup(cfg):
 
     cfg['schedulers'][prefix+'-dep'] = schedulers.Triggerable(
         name=prefix+'-dep',
+        codebases=['iceprod'],
         builderNames=[prefix+'_builder'],
     )
 
