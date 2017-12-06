@@ -65,6 +65,7 @@ def setup(cfg):
                         mode='full',
                         method='clobber',
                         workdir='build',
+                        alwaysUseLatest=True,
                     ),
                     steps.ShellCommand(
                         name='build cvmfs',
